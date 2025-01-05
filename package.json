@@ -10,10 +10,10 @@
   "name": "tongston-chatbot",
   "version": "1.0.0",
   "type": "module",
-  "main": "ai chatbot/server.js",
+  "main": "ai chatbot/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon \"ai chatbot/server.js\""
+    "start": "nodemon \"ai chatbot/index.js\""
   },
   "author": "",
   "license": "ISC",
