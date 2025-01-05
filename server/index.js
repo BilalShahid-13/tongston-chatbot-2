@@ -65,26 +65,39 @@ const extractIndustryFromQuery = (query) => {
   return match ? match[1].trim() : null;
 };
 
-// Function to ask OpenAI directly
-const askOpenAI = async (userQuery) => {
+// Function to ask OpenAI directly with streaming
+const askOpenAI = async (userQuery, res) => {
   try {
     const prompt = `User's industry: ${
       userContext.industry || "not specified"
     }. Respond to the following query in the context of their industry: "${userQuery}"`;
+
+    // Set headers for streaming
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Transfer-Encoding", "chunked");
+
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo", // Use a faster model
       messages: [{ role: "user", content: prompt }],
       temperature: 0.8,
+      stream: true, // Enable streaming
     });
-    return response.choices[0].message.content.trim();
+
+    // Stream the response to the client
+    for await (const chunk of response) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      res.write(content);
+    }
+
+    res.end(); // End the stream
   } catch (error) {
     console.error("Error using OpenAI:", error.message);
-    return "An error occurred. Please try again.";
+    res.status(500).json({ response: "An error occurred. Please try again." });
   }
 };
 
-// Function to query OpenAI using knowledge base content
-const askOpenAIWithTextContent = async (extractedText, userQuery) => {
+// Function to query OpenAI using knowledge base content with streaming
+const askOpenAIWithTextContent = async (extractedText, userQuery, res) => {
   try {
     const prompt = `User's industry: ${
       userContext.industry || "not specified"
@@ -92,15 +105,28 @@ const askOpenAIWithTextContent = async (extractedText, userQuery) => {
       0,
       4000
     )} --- Respond professionally and concisely.`;
+
+    // Set headers for streaming
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Transfer-Encoding", "chunked");
+
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo", // Use a faster model
       messages: [{ role: "user", content: prompt }],
       temperature: 0.8,
+      stream: true, // Enable streaming
     });
-    return response.choices[0].message.content.trim();
+
+    // Stream the response to the client
+    for await (const chunk of response) {
+      const content = chunk.choices[0]?.delta?.content || "";
+      res.write(content);
+    }
+
+    res.end(); // End the stream
   } catch (error) {
     console.error("Error using OpenAI with text content:", error.message);
-    return "An error occurred. Please try again.";
+    res.status(500).json({ response: "An error occurred. Please try again." });
   }
 };
 
@@ -120,14 +146,12 @@ app.post("/ask", async (req, res) => {
     if (filePath) {
       const extractedText = await fetchFileContent(filePath);
       if (extractedText) {
-        const response = await askOpenAIWithTextContent(extractedText, query);
-        res.json({ response });
+        await askOpenAIWithTextContent(extractedText, query, res);
       } else {
         res.json({ response: "Failed to fetch the knowledge base file." });
       }
     } else {
-      const response = await askOpenAI(query);
-      res.json({ response });
+      await askOpenAI(query, res);
     }
   } catch (error) {
     console.error("Server error:", error.message);
@@ -139,5 +163,8 @@ app.get("/", (req, res) => {
   res.send("Hello from the server chatbot2!");
 });
 
-// Export the Express app
-export default app;
+// Start the server
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

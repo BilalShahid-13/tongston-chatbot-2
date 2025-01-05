@@ -1,7 +1,6 @@
 const chatBox = document.getElementById("chat-box");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
-const port = 4000;
 
 let userIndustry = ""; // Store the user's industry
 
@@ -15,22 +14,39 @@ function addMessage(message, isUser = false) {
   chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the bottom
 }
 
-// Function to send user query to the backend
+// Function to send user query to the backend and handle streaming
 async function sendQuery(query) {
+  const url = `http://localhost:4000/ask`;
+  // const url = `https://tongston-chatbot-2.vercel.app/ask`
   try {
-    const response = await axios.post(
-      "https://tongston-chatbot-2.vercel.app/ask",
-      {
-        query,
-        industry: userIndustry,
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+      body: JSON.stringify({ query, industry: userIndustry }),
+    });
 
-    const data = response.data;
-    addMessage(data.response); // Add bot's response to the chat box
+    // Handle streaming response
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    // Create a placeholder for the bot's response
+    const botMessageDiv = document.createElement("div");
+    botMessageDiv.classList.add("message", "bot-message");
+    chatBox.appendChild(botMessageDiv);
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      // Decode the chunk and append it to the bot's message
+      const chunk = decoder.decode(value);
+      botMessageDiv.textContent += chunk;
+
+      // Auto-scroll to the bottom
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
   } catch (error) {
     console.error("Error:", error);
     addMessage("An error occurred. Please try again.");
