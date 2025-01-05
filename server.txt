@@ -1,6 +1,6 @@
-import axios from "axios";
 import express from "express";
 import bodyParser from "body-parser";
+import fs from "fs";
 import cors from "cors";
 import { OpenAI } from "openai";
 import { config } from "dotenv";
@@ -24,13 +24,12 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors("*"));
 
-// Function to fetch file content from URL
-const fetchFileContent = async (url) => {
+// Function to read a text file
+const readTextFile = (filePath) => {
   try {
-    const response = await axios.get(url);
-    return response.data;
+    return fs.readFileSync(filePath, "utf-8");
   } catch (error) {
-    console.error(`Error fetching file from ${url}:`, error.message);
+    console.error(`Error reading file at ${filePath}:`, error.message);
     return null;
   }
 };
@@ -121,13 +120,13 @@ app.post("/ask", async (req, res) => {
   const filePath = getKnowledgeBaseFilePath(query);
 
   if (filePath) {
-    const extractedText = await fetchFileContent(filePath);
+    const extractedText = readTextFile(filePath);
 
     if (extractedText) {
       const response = await askOpenAIWithTextContent(extractedText, query);
       res.json({ response });
     } else {
-      res.json({ response: "Failed to fetch the knowledge base file." });
+      res.json({ response: "Failed to read the knowledge base file." });
     }
   } else {
     const response = await askOpenAI(query);
@@ -135,9 +134,9 @@ app.post("/ask", async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('Hello from the server chatbot2!')
-})
+app.get("/", (req, res) => {
+  res.send("Hello from the server chatbot2!");
+});
 
 // Start the server
 const PORT = 4002;
