@@ -18,7 +18,7 @@ function addMessage(message, isUser = false) {
 // Function to send user query to the backend
 async function sendQuery(query) {
   try {
-    const response = await fetch(`http://localhost:${port}/ask`, {
+    const response = await fetch(`https://tongston-chatbot-2.vercel.app/ask`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
