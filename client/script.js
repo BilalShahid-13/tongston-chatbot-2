@@ -16,8 +16,8 @@ function addMessage(message, isUser = false) {
 
 // Function to send user query to the backend and handle streaming
 async function sendQuery(query) {
-  const url = `http://localhost:4000/ask`;
-  // const url = `https://tongston-chatbot-2.vercel.app/ask`
+  // const url = `http://localhost:4000/ask`;
+  const url = `https://tongston-chatbot-2.vercel.app/ask`
   try {
     const response = await fetch(url, {
       method: "POST",
