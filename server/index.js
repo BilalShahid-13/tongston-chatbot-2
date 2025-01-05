@@ -29,6 +29,12 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
 
 // Function to fetch file content from URL
 const fetchFileContent = async (url) => {
