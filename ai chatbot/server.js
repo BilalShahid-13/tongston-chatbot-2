@@ -4,7 +4,7 @@ import fs from "fs";
 import cors from "cors";
 import { OpenAI } from "openai";
 import { config } from "dotenv";
-import { prompts } from "../utils/prompts.js"; // Import prompt mappings
+import { prompts } from "./utils/prompts.js"; // Import prompt mappings
 
 // Load environment variables
 config();
@@ -133,6 +133,10 @@ app.post("/ask", async (req, res) => {
     res.json({ response });
   }
 });
+
+app.get('/', (req, res) => {
+  res.send('Hello from the server chatbot2!')
+})
 
 // Start the server
 const PORT = 4000;
