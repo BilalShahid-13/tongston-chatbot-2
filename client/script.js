@@ -18,15 +18,18 @@ function addMessage(message, isUser = false) {
 // Function to send user query to the backend
 async function sendQuery(query) {
   try {
-    const response = await fetch(`https://tongston-chatbot-2.vercel.app/ask`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await axios.post(
+      "https://tongston-chatbot-2.vercel.app/ask",
+      {
+        query,
+        industry: userIndustry,
       },
-      body: JSON.stringify({ query, industry: userIndustry }),
-    });
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
 
-    const data = await response.json();
+    const data = response.data;
     addMessage(data.response); // Add bot's response to the chat box
   } catch (error) {
     console.error("Error:", error);

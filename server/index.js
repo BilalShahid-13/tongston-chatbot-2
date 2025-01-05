@@ -45,11 +45,9 @@ const fetchFileContent = async (url) => {
 const getKnowledgeBaseFilePath = (userQuery) => {
   if (!prompts) return null;
   const query = userQuery.toLowerCase();
-
   const matchedPrompt = prompts.find((prompt) =>
     prompt.tags.some((tag) => query.includes(tag))
   );
-
   return matchedPrompt ? matchedPrompt.knowledgeBase : null;
 };
 
@@ -64,18 +62,14 @@ const extractIndustryFromQuery = (query) => {
 // Function to ask OpenAI directly
 const askOpenAI = async (userQuery) => {
   try {
-    const prompt = `
-      User's industry: ${userContext.industry || "not specified"}.
-      Respond to the following query in the context of their industry:
-      "${userQuery}"
-    `;
-
+    const prompt = `User's industry: ${
+      userContext.industry || "not specified"
+    }. Respond to the following query in the context of their industry: "${userQuery}"`;
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.8,
     });
-
     return response.choices[0].message.content.trim();
   } catch (error) {
     console.error("Error using OpenAI:", error.message);
@@ -86,22 +80,17 @@ const askOpenAI = async (userQuery) => {
 // Function to query OpenAI using knowledge base content
 const askOpenAIWithTextContent = async (extractedText, userQuery) => {
   try {
-    const prompt = `
-      User's industry: ${userContext.industry || "not specified"}.
-      Using the following knowledge base, provide a response to their query:
-      "${userQuery}"
-      ---
-      ${extractedText.slice(0, 4000)}
-      ---
-      Respond professionally and concisely.
-    `;
-
+    const prompt = `User's industry: ${
+      userContext.industry || "not specified"
+    }. Using the following knowledge base, provide a response to their query: "${userQuery}" --- ${extractedText.slice(
+      0,
+      4000
+    )} --- Respond professionally and concisely.`;
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.8,
     });
-
     return response.choices[0].message.content.trim();
   } catch (error) {
     console.error("Error using OpenAI with text content:", error.message);
@@ -113,34 +102,36 @@ const askOpenAIWithTextContent = async (extractedText, userQuery) => {
 app.post("/ask", async (req, res) => {
   const { query, industry } = req.body;
 
-  // Update the user's industry if provided
-  if (industry) {
-    userContext.industry = industry.trim();
-  }
+  try {
+    // Update the user's industry if provided
+    if (industry) userContext.industry = industry.trim();
 
-  // Extract industry from the query (if mentioned)
-  const extractedIndustry = extractIndustryFromQuery(query);
-  if (extractedIndustry) {
-    userContext.industry = extractedIndustry;
-  }
+    // Extract industry from the query (if mentioned)
+    const extractedIndustry = extractIndustryFromQuery(query);
+    if (extractedIndustry) userContext.industry = extractedIndustry;
 
-  const filePath = getKnowledgeBaseFilePath(query);
-
-  if (filePath) {
-    const extractedText = await fetchFileContent(filePath);
-
-    if (extractedText) {
-      const response = await askOpenAIWithTextContent(extractedText, query);
-      res.json({ response });
+    const filePath = getKnowledgeBaseFilePath(query);
+    if (filePath) {
+      const extractedText = await fetchFileContent(filePath);
+      if (extractedText) {
+        const response = await askOpenAIWithTextContent(extractedText, query);
+        res.json({ response });
+      } else {
+        res.json({ response: "Failed to fetch the knowledge base file." });
+      }
     } else {
-      res.json({ response: "Failed to fetch the knowledge base file." });
+      const response = await askOpenAI(query);
+      res.json({ response });
     }
-  } else {
-    const response = await askOpenAI(query);
-    res.json({ response });
+  } catch (error) {
+    console.error("Server error:", error.message);
+    res.status(500).json({ response: "A server error has occurred." });
   }
 });
 
 app.get("/", (req, res) => {
   res.send("Hello from the server chatbot2!");
 });
+
+// Export the Express app
+export default app;
