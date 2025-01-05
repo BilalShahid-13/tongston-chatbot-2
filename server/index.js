@@ -139,8 +139,3 @@ app.get("/", (req, res) => {
   res.send("Hello from the server chatbot2!");
 });
 
-// Start the server
-const PORT = 4002;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
