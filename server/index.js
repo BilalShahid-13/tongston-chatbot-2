@@ -22,7 +22,13 @@ const userContext = {
 // Initialize Express app
 const app = express();
 app.use(bodyParser.json());
-app.use(cors("*"));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Function to fetch file content from URL
 const fetchFileContent = async (url) => {
@@ -138,4 +144,3 @@ app.post("/ask", async (req, res) => {
 app.get("/", (req, res) => {
   res.send("Hello from the server chatbot2!");
 });
-
