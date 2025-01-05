@@ -135,9 +135,9 @@ app.post("/ask", async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('Hello from the server chatbot2!')
-})
+app.get("/", (req, res) => {
+  res.send("Hello from the server chatbot2!");
+});
 
 // Start the server
 const PORT = 4002;
